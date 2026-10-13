@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Open on Your iPhone – TaskTeam Apps</title>
+  <title>Open on Your Phone – TaskTeam Apps</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -18,25 +18,25 @@
     <section class="wrap notice">
       <div class="icon" aria-hidden="true">📱</div>
 
-      <!-- Shown on computers and other non-iPhone devices -->
+      <!-- Shown on computers -->
       <div id="desktop-msg">
-        <h1>Please open this link on your iPhone</h1>
-        <p>For your security, verifying your email and resetting your password can only be done in our app. These actions aren't available in a web browser yet.</p>
+        <h1>Please open this link on your phone</h1>
+        <p>For your security, verifying your email and resetting your password can only be done in our app. These actions aren't available on the web yet.</p>
         <ol class="steps">
-          <li>Open the email we sent you on your iPhone.</li>
+          <li>Open the email we sent you on the phone where our app is installed.</li>
           <li>Make sure the app is installed.</li>
           <li>Tap the link in the email again.</li>
         </ol>
       </div>
 
-      <!-- Shown when the page is opened on an iPhone or iPad -->
+      <!-- Shown when the page is opened on a phone or tablet -->
       <div id="ios-msg" hidden>
         <h1>Almost there</h1>
         <p>This link needs to open in our app, not in your browser.</p>
         <ol class="steps">
           <li>Make sure the app is installed and up to date.</li>
           <li>Go back to the email and tap the link again.</li>
-          <li>If it opens here again, try opening the email in Apple's Mail app.</li>
+          <li>If it opens here again, try opening the email in your phone's built-in Mail app.</li>
         </ol>
       </div>
 
@@ -52,12 +52,12 @@
   </footer>
 
   <script>
-    // Detect iPhone/iPad (including iPads that report as Mac) and swap the message.
+    // Detect phones and tablets (iPhone, iPad incl. iPads that report as Mac, Android) and swap the message.
     (function () {
       var ua = navigator.userAgent || "";
-      var isIOS = /iPhone|iPad|iPod/.test(ua) ||
+      var isMobile = /iPhone|iPad|iPod|Android/.test(ua) ||
                   (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-      if (isIOS) {
+      if (isMobile) {
         document.getElementById("desktop-msg").hidden = true;
         document.getElementById("ios-msg").hidden = false;
       }
