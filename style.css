@@ -141,7 +141,7 @@ main { flex: 1; }
 .card p { margin: 0; color: var(--muted); }
 
 .page {
-  padding: 64px 0 80px;
+  padding: 64px 20px 80px;
   max-width: 680px;
 }
 
@@ -344,3 +344,16 @@ nav .menu a {
   nav a, .nav-btn { padding: 8px 8px; }
   .menu { min-width: 250px; }
 }
+
+/* Contact page */
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 28px;
+}
+.contact-grid .contact-box { margin-top: 0; }
+.contact-box h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.contact-box p { margin: 0 0 12px; }
+.contact-box a { font-size: 1rem; overflow-wrap: anywhere; }
+.contact-box a.inline { font-weight: 400; font-size: inherit; }
