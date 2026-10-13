@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Open on Your iPhone – Task Team Apps</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <a class="brand" href="index.html">Task Team Apps</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="wrap notice">
+      <div class="icon" aria-hidden="true">📱</div>
+
+      <!-- Shown on computers and other non-iPhone devices -->
+      <div id="desktop-msg">
+        <h1>Please open this link on your iPhone</h1>
+        <p>For your security, verifying your email and resetting your password can only be done in our app. These actions aren't available in a web browser yet.</p>
+        <ol class="steps">
+          <li>Open the email we sent you on your iPhone.</li>
+          <li>Make sure the app is installed.</li>
+          <li>Tap the link in the email again.</li>
+        </ol>
+      </div>
+
+      <!-- Shown when the page is opened on an iPhone or iPad -->
+      <div id="ios-msg" hidden>
+        <h1>Almost there</h1>
+        <p>This link needs to open in our app, not in your browser.</p>
+        <ol class="steps">
+          <li>Make sure the app is installed and up to date.</li>
+          <li>Go back to the email and tap the link again.</li>
+          <li>If it opens here again, try opening the email in Apple's Mail app.</li>
+        </ol>
+      </div>
+
+      <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>&copy; 2026 Task Team Apps</span>
+      <span class="footer-links"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="contact.html">Support</a></span>
+    </div>
+  </footer>
+
+  <script>
+    // Detect iPhone/iPad (including iPads that report as Mac) and swap the message.
+    (function () {
+      var ua = navigator.userAgent || "";
+      var isIOS = /iPhone|iPad|iPod/.test(ua) ||
+                  (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (isIOS) {
+        document.getElementById("desktop-msg").hidden = true;
+        document.getElementById("ios-msg").hidden = false;
+      }
+    })();
+  </script>
+</body>
+</html>
