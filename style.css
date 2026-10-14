@@ -415,3 +415,27 @@ nav .menu a {
 .hero {
   background: radial-gradient(ellipse at top, rgba(124, 200, 255, 0.22), transparent 65%);
 }
+
+/* App icons */
+.app-icon {
+  display: block;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 24px;
+  border-radius: 22.5%;
+  box-shadow: 0 10px 30px rgba(11, 46, 92, 0.18), 0 0 0 1px rgba(11, 46, 92, 0.06);
+}
+
+nav .menu a:has(.menu-icon) {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.menu-icon {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 22.5%;
+  box-shadow: 0 0 0 1px rgba(11, 46, 92, 0.08);
+}
