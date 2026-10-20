@@ -37,11 +37,24 @@
       var isIOS = /iPhone|iPad|iPod/.test(ua) ||
         (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); // iPadOS reports as a Mac
 
-      if (!isIOS || !hasAuthParams) return;
-
       // ?next= picks the tlt:// host Auth.handleAuthCallback looks at
       var params = new URLSearchParams(search);
       var next = params.get("next") === "reset-password" ? "reset-password" : "email-confirm";
+
+      // Desktop message: email links work only once, and opening one here
+      // already used it — so say what to do next for this kind of link.
+      // No auth params = someone visiting the page directly (generic message).
+      if (!isIOS) {
+        if (hasAuthParams) {
+          var expired = /(^|[?&#])(error|error_code)=/.test(search + hash);
+          document.documentElement.classList.add(
+            expired ? "desk-expired" : (next === "reset-password" ? "desk-reset" : "desk-confirmed")
+          );
+        }
+        return;
+      }
+
+      if (!hasAuthParams) return;
       params.delete("next");
       var query = params.toString();
       var appURL = "tlt://" + next + (query ? "?" + query : "") + hash;
@@ -76,13 +89,23 @@
   <script src="nav.js" defer></script>
 
   <!-- Page-only: which message shows, plus the handoff spinner.
-       Default (no class) = desktop/Android message. -->
+       The <html> class set in the head script picks the message;
+       no class = someone visiting the page directly. -->
   <style>
-    .state-handoff, .state-ios-fallback { display: none; }
+    .state-handoff, .state-ios-fallback,
+    .state-desk-confirmed, .state-desk-reset, .state-desk-expired { display: none; }
+
     html.handoff .state-default,
-    html.ios-fallback .state-default { display: none; }
-    html.handoff .state-handoff { display: block; }
-    html.ios-fallback .state-ios-fallback { display: block; }
+    html.ios-fallback .state-default,
+    html.desk-confirmed .state-default,
+    html.desk-reset .state-default,
+    html.desk-expired .state-default { display: none; }
+
+    html.handoff .state-handoff,
+    html.ios-fallback .state-ios-fallback,
+    html.desk-confirmed .state-desk-confirmed,
+    html.desk-reset .state-desk-reset,
+    html.desk-expired .state-desk-expired { display: block; }
 
     .spinner {
       width: 32px;
@@ -135,15 +158,54 @@
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
 
-      <!-- Desktop, Android, or anyone visiting the page directly -->
+      <!-- Desktop/Android: email-confirm link (opening it confirmed the email) -->
+      <section class="notice state-desk-confirmed">
+        <div class="icon" aria-hidden="true">✅</div>
+        <h1>Your email is verified</h1>
+        <p>Thanks for confirming your email address. You're ready to start using Tax Lien Tracker.</p>
+        <ol class="steps">
+          <li>Open Tax Lien Tracker on your iPhone or iPad.</li>
+          <li>Log in with your email and password.</li>
+        </ol>
+        <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
+      </section>
+
+      <!-- Desktop/Android: reset-password link (now used up) -->
+      <section class="notice state-desk-reset">
+        <div class="icon" aria-hidden="true">📱</div>
+        <h1>Please reset your password on your phone</h1>
+        <p>For your security, passwords can only be reset in our app. These actions aren't available on the web yet.</p>
+        <p>Each reset link works only once, so this one can't be used again. To reset your password:</p>
+        <ol class="steps">
+          <li>Open Tax Lien Tracker on your iPhone or iPad.</li>
+          <li>Tap <strong>Forgot Password</strong> and send yourself a new reset link.</li>
+          <li>Open the new email <strong>on that device</strong> and tap the link.</li>
+        </ol>
+        <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
+      </section>
+
+      <!-- Desktop/Android: Supabase rejected the link (already used or too old) -->
+      <section class="notice state-desk-expired">
+        <div class="icon" aria-hidden="true">⏱️</div>
+        <h1>This link has expired</h1>
+        <p>Email links work only once and expire after a short time, and this one can no longer be used.</p>
+        <ol class="steps">
+          <li>Open Tax Lien Tracker on your iPhone or iPad.</li>
+          <li>To reset your password, tap <strong>Forgot Password</strong> and send yourself a new link. If you were verifying your email, try logging in.</li>
+          <li>If you requested a new link, open that email <strong>on the same device</strong> and tap it.</li>
+        </ol>
+        <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
+      </section>
+
+      <!-- Anyone visiting the page directly (no email link) -->
       <section class="notice state-default">
         <div class="icon" aria-hidden="true">📱</div>
-        <h1>Please open this link on your phone</h1>
+        <h1>Please open your email link on your phone</h1>
         <p>For your security, verifying your email and resetting your password can only be done in our app. These actions aren't available on the web yet.</p>
         <ol class="steps">
-          <li>Open the email we sent you on the phone where our app is installed.</li>
-          <li>Make sure the app is installed.</li>
-          <li>Tap the link in the email again.</li>
+          <li>Make sure Tax Lien Tracker is installed on your iPhone or iPad.</li>
+          <li>Open the email we sent you on that device.</li>
+          <li>Tap the link in the email. Each link works only once, so if you've already opened it somewhere else, request a new one from the app.</li>
         </ol>
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
