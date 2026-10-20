@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <!--
 //
 //  open-on-mobile.html
@@ -9,16 +9,19 @@
 //
 //  Landing page for Supabase auth emails (confirm email, reset password).
 //  iPhone/iPad: forwards straight into the app as tlt://<next>?...#...,
-//  keeping Supabase's code/tokens. The message never shows unless the
-//  app fails to open. Everywhere else: "please open this on your phone".
+//  keeping Supabase's code/tokens. The "open on your phone" message never
+//  shows there. Everywhere else: the "open on your phone" message.
 -->
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#0B2E5C">
   <title>Open on Your Phone – TaskTeam Apps</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+  <meta name="theme-color" content="#0B2E5C">
 
   <!-- Runs before anything paints, so iPhone users never see the desktop message -->
   <script>
@@ -68,173 +71,90 @@
     })();
   </script>
 
+  <link rel="preload" href="fonts/sora.woff" as="font" type="font/woff" crossorigin>
+  <link rel="stylesheet" href="style.css">
+  <script src="nav.js" defer></script>
+
+  <!-- Page-only: which message shows, plus the handoff spinner.
+       Default (no class) = desktop/Android message. -->
   <style>
-    :root {
-      --brand: #0B2E5C;
-      --bg: #F4F6FA;
-      --card: #FFFFFF;
-      --text: #14213D;
-      --muted: #5B6578;
-      --border: #E2E6EE;
-      --link: #1D5FB8;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0A1626;
-        --card: #11223A;
-        --text: #E8EDF5;
-        --muted: #9AA6B8;
-        --border: #22344F;
-        --link: #7FB0F0;
-      }
-    }
-
-    * { box-sizing: border-box; }
-    html, body { margin: 0; }
-    body {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg);
-      color: var(--text);
-      font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-    a { color: var(--link); }
-
-    header {
-      padding: 20px 16px;
-      display: flex;
-      justify-content: center;
-    }
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--text);
-      font-weight: 700;
-      font-size: 18px;
-      text-decoration: none;
-    }
-    .brand img { width: 32px; height: 32px; border-radius: 8px; }
-
-    main {
-      flex: 1;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 24px 16px 48px;
-    }
-    .card {
-      width: 100%;
-      max-width: 520px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 36px 28px;
-      text-align: center;
-    }
-    .icon { font-size: 44px; line-height: 1; margin-bottom: 12px; }
-    h1 { font-size: 24px; line-height: 1.25; margin: 0 0 12px; }
-    p { margin: 0 0 16px; color: var(--muted); }
-    ol {
-      text-align: left;
-      margin: 20px auto;
-      padding-left: 22px;
-      max-width: 380px;
-    }
-    ol li { margin-bottom: 8px; }
-    .help { font-size: 14px; margin: 24px 0 0; }
-
-    .button {
-      display: inline-block;
-      margin-top: 8px;
-      padding: 14px 24px;
-      border-radius: 12px;
-      background: var(--brand);
-      color: #fff;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    @media (prefers-color-scheme: dark) {
-      .button { background: #2A63B0; }
-    }
-
-    .spinner {
-      width: 28px;
-      height: 28px;
-      margin: 8px auto 16px;
-      border: 3px solid var(--border);
-      border-top-color: var(--link);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    footer {
-      padding: 20px 16px 28px;
-      text-align: center;
-      font-size: 13px;
-      color: var(--muted);
-    }
-    footer nav { margin-top: 6px; display: flex; gap: 16px; justify-content: center; }
-
-    /* Which message shows. Default (no class) = desktop/Android message. */
     .state-handoff, .state-ios-fallback { display: none; }
     html.handoff .state-default,
     html.ios-fallback .state-default { display: none; }
     html.handoff .state-handoff { display: block; }
     html.ios-fallback .state-ios-fallback { display: block; }
-    /* Keep the handoff screen minimal — no chrome while the app opens */
-    html.handoff header, html.handoff footer { visibility: hidden; }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      margin: 8px auto 20px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <header>
-    <a class="brand" href="https://taskteamapps.com/index.html">
-      <img src="https://taskteamapps.com/assets/logo-mark.png" alt="">
-      TaskTeamApps
-    </a>
+    <div class="wrap">
+      <a class="brand" href="index.html" aria-label="TaskTeam Apps home"><picture><source srcset="assets/logo-mark-dark.png" media="(prefers-color-scheme: dark)"><img class="brand-mark" src="assets/logo-mark.png" alt="" width="39" height="40"></picture><span class="brand-text"><span class="brand-name"><span class="b-task">Task</span><span class="b-team">Team</span></span><span class="brand-sub">Apps</span></span></a>
+      <nav>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li class="dropdown">
+            <button type="button" class="nav-btn" aria-haspopup="true" aria-expanded="false">Apps<svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <ul class="menu">
+              <li><a href="tax-lien-tracker.html"><img class="menu-icon" src="assets/tlt-icon-small.png" alt="" width="32" height="32"><span class="menu-title">Tax Lien Tracker</span></a></li>
+              <li class="menu-note">More apps coming soon</li>
+            </ul>
+          </li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
   </header>
 
   <main>
-    <!-- iPhone: shown only while handing off to the app -->
-    <div class="card state-handoff" aria-live="polite">
-      <div class="spinner" aria-hidden="true"></div>
-      <p>Opening Tax Lien Tracker…</p>
-    </div>
+    <div class="wrap">
+      <!-- iPhone: shown only while handing off to the app -->
+      <section class="notice state-handoff" aria-live="polite">
+        <div class="spinner" aria-hidden="true"></div>
+        <p>Opening Tax Lien Tracker…</p>
+      </section>
 
-    <!-- iPhone: the app didn't open, or the user came back to Safari -->
-    <div class="card state-ios-fallback">
-      <div class="icon" aria-hidden="true">📱</div>
-      <h1>Continue in Tax Lien Tracker</h1>
-      <p>If the app opened, you're all set and can close this tab.</p>
-      <p>If it didn't, make sure Tax Lien Tracker is installed on this device, then tap below.</p>
-      <a class="button" id="open-app" href="#">Open Tax Lien Tracker</a>
-      <p class="help">Still having trouble? <a href="https://taskteamapps.com/contact.html">Contact us</a> and we'll help.</p>
-    </div>
+      <!-- iPhone: the app didn't open, or the user came back to Safari -->
+      <section class="notice state-ios-fallback">
+        <div class="icon" aria-hidden="true">📱</div>
+        <h1>Continue in Tax Lien Tracker</h1>
+        <p>If the app opened, you're all set and can close this tab.</p>
+        <p>If it didn't, make sure Tax Lien Tracker is installed on this device, then tap below.</p>
+        <p><a class="button" id="open-app" href="#">Open Tax Lien Tracker</a></p>
+        <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
+      </section>
 
-    <!-- Desktop, Android, or anyone visiting the page directly -->
-    <div class="card state-default">
-      <div class="icon" aria-hidden="true">📱</div>
-      <h1>Please open this link on your phone</h1>
-      <p>For your security, verifying your email and resetting your password can only be done in our app. These actions aren't available on the web yet.</p>
-      <ol>
-        <li>Open the email we sent you on the phone where our app is installed.</li>
-        <li>Make sure the app is installed.</li>
-        <li>Tap the link in the email again.</li>
-      </ol>
-      <p class="help">Still having trouble? <a href="https://taskteamapps.com/contact.html">Contact us</a> and we'll help.</p>
+      <!-- Desktop, Android, or anyone visiting the page directly -->
+      <section class="notice state-default">
+        <div class="icon" aria-hidden="true">📱</div>
+        <h1>Please open this link on your phone</h1>
+        <p>For your security, verifying your email and resetting your password can only be done in our app. These actions aren't available on the web yet.</p>
+        <ol class="steps">
+          <li>Open the email we sent you on the phone where our app is installed.</li>
+          <li>Make sure the app is installed.</li>
+          <li>Tap the link in the email again.</li>
+        </ol>
+        <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
+      </section>
     </div>
   </main>
 
   <footer>
-    © 2026 TaskTeam Apps
-    <nav>
-      <a href="https://taskteamapps.com/terms.html">Terms</a>
-      <a href="https://taskteamapps.com/privacy.html">Privacy</a>
-      <a href="https://taskteamapps.com/contact.html">Support</a>
-    </nav>
+    <div class="wrap">
+      <span>&copy; 2026 TaskTeam Apps</span>
+      <span class="footer-links"><a href="terms.html">Terms</a><a href="privacy.html">Privacy</a><a href="contact.html">Support</a></span>
+    </div>
   </footer>
 
   <script>
