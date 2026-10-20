@@ -41,15 +41,24 @@
       var params = new URLSearchParams(search);
       var next = params.get("next") === "reset-password" ? "reset-password" : "email-confirm";
 
-      // Desktop message: email links work only once, and opening one here
-      // already used it — so say what to do next for this kind of link.
+      var root = document.documentElement;
+      if (isIOS) root.classList.add("ios");
+
+      // Supabase checks the link before redirecting here. An expired or
+      // already-used link arrives with error=… instead of a code, so show
+      // the "expired" message on every device rather than opening the app.
+      var expired = /(^|[?&#])(error|error_code)=/.test(search + hash);
+      if (expired) {
+        root.classList.add("desk-expired");
+        return;
+      }
+
+      // Desktop message: opening the link here already used it — so say
+      // what to do next for this kind of link.
       // No auth params = someone visiting the page directly (generic message).
       if (!isIOS) {
         if (hasAuthParams) {
-          var expired = /(^|[?&#])(error|error_code)=/.test(search + hash);
-          document.documentElement.classList.add(
-            expired ? "desk-expired" : (next === "reset-password" ? "desk-reset" : "desk-confirmed")
-          );
+          root.classList.add(next === "reset-password" ? "desk-reset" : "desk-confirmed");
         }
         return;
       }
@@ -61,7 +70,6 @@
 
       window.__appURL = appURL;
 
-      var root = document.documentElement;
       root.classList.add("handoff");
 
       function showFallback() {
@@ -106,6 +114,10 @@
     html.desk-confirmed .state-desk-confirmed,
     html.desk-reset .state-desk-reset,
     html.desk-expired .state-desk-expired { display: block; }
+
+    /* "Open the app" button on the expired message — iPhone/iPad only */
+    .ios-only { display: none; }
+    html.ios .ios-only { display: block; }
 
     .spinner {
       width: 32px;
@@ -184,16 +196,17 @@
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
 
-      <!-- Desktop/Android: Supabase rejected the link (already used or too old) -->
+      <!-- Any device: Supabase rejected the link (already used or too old) -->
       <section class="notice state-desk-expired">
         <div class="icon" aria-hidden="true">⏱️</div>
         <h1>This link has expired</h1>
-        <p>Email links work only once and expire after a short time, and this one can no longer be used.</p>
+        <p>This link has already been used or is too old, so it can't be used again.</p>
         <ol class="steps">
           <li>Open Tax Lien Tracker on your iPhone or iPad.</li>
           <li>To reset your password, tap <strong>Forgot Password</strong> and send yourself a new link. If you were verifying your email, try logging in.</li>
           <li>If you requested a new link, open that email <strong>on the same device</strong> and tap it.</li>
         </ol>
+        <p class="ios-only"><a class="button" href="tlt://open">Open Tax Lien Tracker</a></p>
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
 
