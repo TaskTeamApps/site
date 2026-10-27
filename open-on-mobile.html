@@ -11,6 +11,7 @@
 //  iPhone/iPad: forwards straight into the app as tlt://<next>?...#...,
 //  keeping Supabase's code/tokens. The "open on your phone" message never
 //  shows there. Everywhere else: the "open on your phone" message.
+//  Expired links: a message for that kind of link (?next=), on any device.
 -->
 <html lang="en">
 <head>
@@ -39,17 +40,23 @@
 
       // ?next= picks the tlt:// host Auth.handleAuthCallback looks at
       var params = new URLSearchParams(search);
-      var next = params.get("next") === "reset-password" ? "reset-password" : "email-confirm";
+      var rawNext = params.get("next");
+      var next = rawNext === "reset-password" ? "reset-password" : "email-confirm";
 
       var root = document.documentElement;
       if (isIOS) root.classList.add("ios");
 
       // Supabase checks the link before redirecting here. An expired or
       // already-used link arrives with error=… instead of a code, so show
-      // the "expired" message on every device rather than opening the app.
+      // an "expired" message on every device rather than opening the app.
+      // ?next= says which kind of link it was; without it, a general message.
       var expired = /(^|[?&#])(error|error_code)=/.test(search + hash);
       if (expired) {
-        root.classList.add("desk-expired");
+        root.classList.add(
+          rawNext === "reset-password" ? "expired-reset" :
+          rawNext === "email-confirm" ? "expired-confirm" :
+          "desk-expired"
+        );
         return;
       }
 
@@ -101,21 +108,26 @@
        no class = someone visiting the page directly. -->
   <style>
     .state-handoff, .state-ios-fallback,
-    .state-desk-confirmed, .state-desk-reset, .state-desk-expired { display: none; }
+    .state-desk-confirmed, .state-desk-reset, .state-desk-expired,
+    .state-expired-reset, .state-expired-confirm { display: none; }
 
     html.handoff .state-default,
     html.ios-fallback .state-default,
     html.desk-confirmed .state-default,
     html.desk-reset .state-default,
-    html.desk-expired .state-default { display: none; }
+    html.desk-expired .state-default,
+    html.expired-reset .state-default,
+    html.expired-confirm .state-default { display: none; }
 
     html.handoff .state-handoff,
     html.ios-fallback .state-ios-fallback,
     html.desk-confirmed .state-desk-confirmed,
     html.desk-reset .state-desk-reset,
-    html.desk-expired .state-desk-expired { display: block; }
+    html.desk-expired .state-desk-expired,
+    html.expired-reset .state-expired-reset,
+    html.expired-confirm .state-expired-confirm { display: block; }
 
-    /* "Open the app" button on the expired message — iPhone/iPad only */
+    /* "Open the app" button on the expired messages — iPhone/iPad only */
     .ios-only { display: none; }
     html.ios .ios-only { display: block; }
 
@@ -196,15 +208,44 @@
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
 
-      <!-- Any device: Supabase rejected the link (already used or too old) -->
+      <!-- Any device: expired or already-used password reset link -->
+      <section class="notice state-expired-reset">
+        <div class="icon" aria-hidden="true">⏱️</div>
+        <h1>This password reset link has expired</h1>
+        <p>Reset links work only once and only for a limited time, so this one can't be used. You can get a new one in the app.</p>
+        <ol class="steps">
+          <li>Open Tax Lien Tracker on your iPhone or iPad.</li>
+          <li>Tap <strong>Forgot Password</strong> and send yourself a new reset link.</li>
+          <li>Open the new email <strong>on that device</strong> and tap the link right away.</li>
+        </ol>
+        <p class="ios-only"><a class="button" href="tlt://open">Open Tax Lien Tracker</a></p>
+        <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
+      </section>
+
+      <!-- Any device: expired or already-used email verification link -->
+      <section class="notice state-expired-confirm">
+        <div class="icon" aria-hidden="true">⏱️</div>
+        <h1>This verification link has expired</h1>
+        <p>Verification links work only once and only for a limited time, so this one can't be used. If you already opened it before, your email may already be verified.</p>
+        <ol class="steps">
+          <li>Open Tax Lien Tracker on your iPhone or iPad.</li>
+          <li>Log in with your email and password. If it works, you're all set.</li>
+          <li>If the app says your email still needs to be verified, send yourself a new verification email, then open it <strong>on that device</strong> and tap the link right away.</li>
+        </ol>
+        <p class="ios-only"><a class="button" href="tlt://open">Open Tax Lien Tracker</a></p>
+        <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
+      </section>
+
+      <!-- Any device: Supabase rejected the link, but we can't tell which kind -->
       <section class="notice state-desk-expired">
         <div class="icon" aria-hidden="true">⏱️</div>
         <h1>This link has expired</h1>
-        <p>This link has already been used or is too old, so it can't be used again.</p>
+        <p>Email links work only once and only for a limited time, so this one can't be used again.</p>
         <ol class="steps">
           <li>Open Tax Lien Tracker on your iPhone or iPad.</li>
-          <li>To reset your password, tap <strong>Forgot Password</strong> and send yourself a new link. If you were verifying your email, try logging in.</li>
-          <li>If you requested a new link, open that email <strong>on the same device</strong> and tap it.</li>
+          <li><strong>Verifying your email?</strong> Try logging in. If the app says your email still needs to be verified, send yourself a new verification email.</li>
+          <li><strong>Resetting your password?</strong> Tap <strong>Forgot Password</strong> and send yourself a new reset link.</li>
+          <li>Open the new email <strong>on that device</strong> and tap the link right away.</li>
         </ol>
         <p class="ios-only"><a class="button" href="tlt://open">Open Tax Lien Tracker</a></p>
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
