@@ -9,8 +9,12 @@
 //
 //  Landing page for Supabase auth emails (confirm email, reset password).
 //  iPhone/iPad: forwards straight into the app as tlt://<next>?...#...,
-//  keeping Supabase's code/tokens. The "open on your phone" message never
-//  shows there. Everywhere else: the "open on your phone" message.
+//  keeping Supabase's code/tokens.
+//  Android: same handoff, as an intent:// URL (scheme tlt, package
+//  com.TaskTeamApps.Tax_Lien_Tracker), which Chrome and the Gmail in-app
+//  browser open more reliably than a bare tlt:// link.
+//  The "open on your phone" message never shows on either. Everywhere
+//  else: the "open on your phone" message.
 -->
 <html lang="en">
 <head>
@@ -23,7 +27,7 @@
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
   <meta name="theme-color" content="#0B2E5C">
 
-  <!-- Runs before anything paints, so iPhone users never see the desktop message -->
+  <!-- Runs before anything paints, so phone users never see the desktop message -->
   <script>
     (function () {
       var search = window.location.search;
@@ -36,13 +40,30 @@
       var ua = navigator.userAgent;
       var isIOS = /iPhone|iPad|iPod/.test(ua) ||
         (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); // iPadOS reports as a Mac
+      var isAndroid = /Android/i.test(ua);
+      var isMobile = isIOS || isAndroid;
+
+      // Builds the link that opens the app at tlt://<host>?<query>#<hash>.
+      // Android gets an intent:// URL; intent URLs use '#' for their own
+      // data, so a link carrying a fragment (implicit-flow tokens) falls
+      // back to the bare tlt:// scheme. The Android app uses PKCE (?code=),
+      // so that's the normal case.
+      function appLink(host, query, hash) {
+        var q = query ? "?" + query : "";
+        if (isAndroid && !hash) {
+          return "intent://" + host + q +
+            "#Intent;scheme=tlt;package=com.TaskTeamApps.Tax_Lien_Tracker;end";
+        }
+        return "tlt://" + host + q + (hash || "");
+      }
+      window.__openAppURL = appLink("open", "", "");
 
       // ?next= picks the tlt:// host Auth.handleAuthCallback looks at
       var params = new URLSearchParams(search);
       var next = params.get("next") === "reset-password" ? "reset-password" : "email-confirm";
 
       var root = document.documentElement;
-      if (isIOS) root.classList.add("ios");
+      if (isMobile) root.classList.add("mobile");
 
       // Supabase checks the link before redirecting here. An expired or
       // already-used link arrives with error=… instead of a code, so show
@@ -56,7 +77,7 @@
       // Desktop message: opening the link here already used it — so say
       // what to do next for this kind of link.
       // No auth params = someone visiting the page directly (generic message).
-      if (!isIOS) {
+      if (!isMobile) {
         if (hasAuthParams) {
           root.classList.add(next === "reset-password" ? "desk-reset" : "desk-confirmed");
         }
@@ -65,8 +86,7 @@
 
       if (!hasAuthParams) return;
       params.delete("next");
-      var query = params.toString();
-      var appURL = "tlt://" + next + (query ? "?" + query : "") + hash;
+      var appURL = appLink(next, params.toString(), hash);
 
       window.__appURL = appURL;
 
@@ -74,10 +94,10 @@
 
       function showFallback() {
         root.classList.remove("handoff");
-        root.classList.add("ios-fallback");
+        root.classList.add("app-fallback");
       }
 
-      // Back from the app, or Safari couldn't open it → show the fallback
+      // Back from the app, or the browser couldn't open it → show the fallback
       window.addEventListener("pageshow", function (e) {
         if (e.persisted) showFallback();
       });
@@ -100,24 +120,24 @@
        The <html> class set in the head script picks the message;
        no class = someone visiting the page directly. -->
   <style>
-    .state-handoff, .state-ios-fallback,
+    .state-handoff, .state-app-fallback,
     .state-desk-confirmed, .state-desk-reset, .state-desk-expired { display: none; }
 
     html.handoff .state-default,
-    html.ios-fallback .state-default,
+    html.app-fallback .state-default,
     html.desk-confirmed .state-default,
     html.desk-reset .state-default,
     html.desk-expired .state-default { display: none; }
 
     html.handoff .state-handoff,
-    html.ios-fallback .state-ios-fallback,
+    html.app-fallback .state-app-fallback,
     html.desk-confirmed .state-desk-confirmed,
     html.desk-reset .state-desk-reset,
     html.desk-expired .state-desk-expired { display: block; }
 
-    /* "Open the app" button on the expired message — iPhone/iPad only */
-    .ios-only { display: none; }
-    html.ios .ios-only { display: block; }
+    /* "Open the app" button on the expired message — phones/tablets only */
+    .mobile-only { display: none; }
+    html.mobile .mobile-only { display: block; }
 
     .spinner {
       width: 32px;
@@ -154,14 +174,14 @@
 
   <main>
     <div class="wrap">
-      <!-- iPhone: shown only while handing off to the app -->
+      <!-- iPhone/Android: shown only while handing off to the app -->
       <section class="notice state-handoff" aria-live="polite">
         <div class="spinner" aria-hidden="true"></div>
         <p>Opening Tax Lien Tracker…</p>
       </section>
 
-      <!-- iPhone: the app didn't open, or the user came back to Safari -->
-      <section class="notice state-ios-fallback">
+      <!-- iPhone/Android: the app didn't open, or the user came back to the browser -->
+      <section class="notice state-app-fallback">
         <div class="icon" aria-hidden="true">📱</div>
         <h1>Continue in Tax Lien Tracker</h1>
         <p>If the app opened, you're all set and can close this tab.</p>
@@ -170,26 +190,26 @@
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
 
-      <!-- Desktop/Android: email-confirm link (opening it confirmed the email) -->
+      <!-- Desktop: email-confirm link (opening it confirmed the email) -->
       <section class="notice state-desk-confirmed">
         <div class="icon" aria-hidden="true">✅</div>
         <h1>Your email is verified</h1>
         <p>Thanks for confirming your email address. You're ready to start using Tax Lien Tracker.</p>
         <ol class="steps">
-          <li>Open Tax Lien Tracker on your iPhone or iPad.</li>
+          <li>Open Tax Lien Tracker on your phone or tablet.</li>
           <li>Log in with your email and password.</li>
         </ol>
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
 
-      <!-- Desktop/Android: reset-password link (now used up) -->
+      <!-- Desktop: reset-password link (now used up) -->
       <section class="notice state-desk-reset">
         <div class="icon" aria-hidden="true">📱</div>
         <h1>Please reset your password on your phone</h1>
         <p>For your security, passwords can only be reset in our app. These actions aren't available on the web yet.</p>
         <p>Each reset link works only once, so this one can't be used again. To reset your password:</p>
         <ol class="steps">
-          <li>Open Tax Lien Tracker on your iPhone or iPad.</li>
+          <li>Open Tax Lien Tracker on your phone or tablet.</li>
           <li>Tap <strong>Forgot Password</strong> and send yourself a new reset link.</li>
           <li>Open the new email <strong>on that device</strong> and tap the link.</li>
         </ol>
@@ -202,11 +222,11 @@
         <h1>This link has expired</h1>
         <p>This link has already been used or is too old, so it can't be used again.</p>
         <ol class="steps">
-          <li>Open Tax Lien Tracker on your iPhone or iPad.</li>
+          <li>Open Tax Lien Tracker on your phone or tablet.</li>
           <li>If you were verifying your email, log in. If your email still needs verifying, tap <strong>Resend Email</strong> to get a new link. To reset your password, tap <strong>Forgot Password</strong> and send yourself a new link.</li>
           <li>Open the new email <strong>on the same device</strong> and tap the link.</li>
         </ol>
-        <p class="ios-only"><a class="button" href="tlt://open">Open Tax Lien Tracker</a></p>
+        <p class="mobile-only"><a class="button" id="open-app-expired" href="tlt://open">Open Tax Lien Tracker</a></p>
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
 
@@ -216,7 +236,7 @@
         <h1>Please open your email link on your phone</h1>
         <p>For your security, verifying your email and resetting your password can only be done in our app. These actions aren't available on the web yet.</p>
         <ol class="steps">
-          <li>Make sure Tax Lien Tracker is installed on your iPhone or iPad.</li>
+          <li>Make sure Tax Lien Tracker is installed on your phone or tablet.</li>
           <li>Open the email we sent you on that device.</li>
           <li>Tap the link in the email.</li>
         </ol>
@@ -238,6 +258,10 @@
     // like Gmail that block the automatic redirect)
     if (window.__appURL) {
       document.getElementById("open-app").href = window.__appURL;
+    }
+    // Expired-link button: intent:// on Android, tlt://open elsewhere
+    if (window.__openAppURL) {
+      document.getElementById("open-app-expired").href = window.__openAppURL;
     }
   </script>
 </body>
