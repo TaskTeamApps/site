@@ -7,7 +7,8 @@
 //  Created by Zia on 10/20/26.
 //  Claude-assisted
 //
-//  Landing page for Supabase auth emails (confirm email, reset password).
+//  Landing page for Supabase auth emails (confirm email, reset password,
+//  change email).
 //  iPhone/iPad: forwards straight into the app as tlt://<next>?...#...,
 //  keeping Supabase's code/tokens.
 //  Android: same handoff, as an intent:// URL (scheme tlt, package
@@ -15,6 +16,12 @@
 //  browser open more reliably than a bare tlt:// link.
 //  The "open on your phone" message never shows on either. Everywhere
 //  else: the "open on your phone" message.
+//
+//  Email change (?next=email-change, from ApiUtil.updateEmail): with
+//  Supabase's "Secure email change" on, links go to both the old and new
+//  address. The first one opened arrives with only message=… (no code),
+//  so every device gets "now open the other link". The second one is
+//  handed to the app as tlt://email-confirm, like a sign-up confirmation.
 -->
 <html lang="en">
 <head>
@@ -58,9 +65,13 @@
       }
       window.__openAppURL = appLink("open", "", "");
 
-      // ?next= picks the tlt:// host Auth.handleAuthCallback looks at
+      // ?next= says what kind of link this is. It also picks the tlt://
+      // host Auth.handleAuthCallback looks at: an email change finishes
+      // the same way as a sign-up confirmation, so it uses email-confirm.
       var params = new URLSearchParams(search);
-      var next = params.get("next") === "reset-password" ? "reset-password" : "email-confirm";
+      var kind = params.get("next");
+      var isEmailChange = kind === "email-change";
+      var next = kind === "reset-password" ? "reset-password" : "email-confirm";
 
       var root = document.documentElement;
       if (isMobile) root.classList.add("mobile");
@@ -74,12 +85,24 @@
         return;
       }
 
+      // First of the two email-change links: Supabase accepted it but
+      // sends only a message, no code, so there's nothing for the app to
+      // do yet. Same message on every device.
+      var hasMessage = /(^|[?&#])message=/.test(search + hash);
+      if (hasMessage && !hasAuthParams) {
+        root.classList.add("email-half");
+        return;
+      }
+
       // Desktop message: opening the link here already used it — so say
       // what to do next for this kind of link.
       // No auth params = someone visiting the page directly (generic message).
       if (!isMobile) {
         if (hasAuthParams) {
-          root.classList.add(next === "reset-password" ? "desk-reset" : "desk-confirmed");
+          root.classList.add(
+            next === "reset-password" ? "desk-reset" :
+            isEmailChange ? "desk-email-changed" : "desk-confirmed"
+          );
         }
         return;
       }
@@ -121,19 +144,24 @@
        no class = someone visiting the page directly. -->
   <style>
     .state-handoff, .state-app-fallback,
-    .state-desk-confirmed, .state-desk-reset, .state-desk-expired { display: none; }
+    .state-desk-confirmed, .state-desk-reset, .state-desk-expired,
+    .state-email-half, .state-desk-email-changed { display: none; }
 
     html.handoff .state-default,
     html.app-fallback .state-default,
     html.desk-confirmed .state-default,
     html.desk-reset .state-default,
-    html.desk-expired .state-default { display: none; }
+    html.desk-expired .state-default,
+    html.email-half .state-default,
+    html.desk-email-changed .state-default { display: none; }
 
     html.handoff .state-handoff,
     html.app-fallback .state-app-fallback,
     html.desk-confirmed .state-desk-confirmed,
     html.desk-reset .state-desk-reset,
-    html.desk-expired .state-desk-expired { display: block; }
+    html.desk-expired .state-desk-expired,
+    html.email-half .state-email-half,
+    html.desk-email-changed .state-desk-email-changed { display: block; }
 
     /* "Open the app" button on the expired message — phones/tablets only */
     .mobile-only { display: none; }
@@ -149,6 +177,11 @@
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Respect Reduce Motion: a still ring instead of a spinning one */
+    @media (prefers-reduced-motion: reduce) {
+      .spinner { animation: none; }
+    }
   </style>
 </head>
 <body>
@@ -190,6 +223,19 @@
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
 
+      <!-- Any device: first of the two email-change links (Secure email change) -->
+      <section class="notice state-email-half">
+        <div class="icon" aria-hidden="true">✉️</div>
+        <h1>One more step</h1>
+        <p>Thanks for confirming. To finish changing your email, we sent a link to <strong>both</strong> your current and new email addresses, and both need to be opened.</p>
+        <ol class="steps">
+          <li>Check the inbox for your other email address.</li>
+          <li>Open that email on your phone or tablet and tap the link.</li>
+        </ol>
+        <p>Until then, keep logging in with your current email.</p>
+        <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
+      </section>
+
       <!-- Desktop: email-confirm link (opening it confirmed the email) -->
       <section class="notice state-desk-confirmed">
         <div class="icon" aria-hidden="true">✅</div>
@@ -198,6 +244,18 @@
         <ol class="steps">
           <li>Open Tax Lien Tracker on your phone or tablet.</li>
           <li>Log in with your email and password.</li>
+        </ol>
+        <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
+      </section>
+
+      <!-- Desktop: last email-change link (opening it changed the email) -->
+      <section class="notice state-desk-email-changed">
+        <div class="icon" aria-hidden="true">✅</div>
+        <h1>Your email has been changed</h1>
+        <p>Thanks for confirming. Your new email address is now your login for Tax Lien Tracker.</p>
+        <ol class="steps">
+          <li>Open Tax Lien Tracker on your phone or tablet.</li>
+          <li>If you're asked to log in, use your <strong>new</strong> email and your same password.</li>
         </ol>
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
@@ -223,7 +281,7 @@
         <p>This link has already been used or is too old, so it can't be used again.</p>
         <ol class="steps">
           <li>Open Tax Lien Tracker on your phone or tablet.</li>
-          <li>If you were verifying your email, log in. If your email still needs verifying, tap <strong>Resend Email</strong> to get a new link. To reset your password, tap <strong>Forgot Password</strong> and send yourself a new link.</li>
+          <li>If you were verifying your email, log in. If your email still needs verifying, tap <strong>Resend Email</strong> to get a new link. To reset your password, tap <strong>Forgot Password</strong> and send yourself a new link. To change your email, go to <strong>Account</strong> &gt; <strong>Edit Profile</strong> and save your new email again.</li>
           <li>Open the new email <strong>on the same device</strong> and tap the link.</li>
         </ol>
         <p class="mobile-only"><a class="button" id="open-app-expired" href="tlt://open">Open Tax Lien Tracker</a></p>
@@ -234,13 +292,13 @@
       <section class="notice state-default">
         <div class="icon" aria-hidden="true">📱</div>
         <h1>Please open your email link on your phone</h1>
-        <p>For your security, verifying your email and resetting your password can only be done in our app. These actions aren't available on the web yet.</p>
+        <p>For your security, verifying your email, changing your email, and resetting your password can only be done in our app. These actions aren't available on the web yet.</p>
         <ol class="steps">
           <li>Make sure Tax Lien Tracker is installed on your phone or tablet.</li>
           <li>Open the email we sent you on that device.</li>
           <li>Tap the link in the email.</li>
         </ol>
-        <p>Already opened the link on another device? If it was an <strong>email verification</strong> link, your email is already verified, so just log in to the app. If it was a <strong>password reset</strong> link, tap <strong>Forgot Password</strong> in the app to get a new one.</p>
+        <p>Already opened the link on another device? If it was an <strong>email verification</strong> or <strong>email change</strong> link, it already worked, so just open the app. If it was a <strong>password reset</strong> link, tap <strong>Forgot Password</strong> in the app to get a new one.</p>
         <p class="small">Still having trouble? <a href="contact.html">Contact us</a> and we'll help.</p>
       </section>
     </div>
