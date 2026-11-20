@@ -450,3 +450,14 @@ nav .menu a:has(.menu-icon) {
   letter-spacing: -0.01em;
   margin: 0 auto 12px;
 }
+
+/* App Store badge (official Apple artwork; don't recolor or restyle) */
+.app-store-badge {
+  display: inline-block;
+  line-height: 0;
+  border-radius: 9px;
+  transition: opacity 0.15s ease;
+}
+.app-store-badge:hover { opacity: 0.85; }
+.app-store-badge:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.app-store-badge img { display: block; width: auto; height: 54px; }
